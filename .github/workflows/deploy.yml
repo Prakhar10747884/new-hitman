@@ -1,0 +1,62 @@
+name: Tag Commits with Version
+
+on:
+  push:
+    branches:
+      - main # Specify the branch to monitor
+
+jobs:
+  tag-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config user.name "${{ secrets.GIT_USER_NAME }}"
+          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+
+      - name: Determine Latest Tag
+        id: get-latest-tag
+        run: |
+          # Get the latest tag from the repository
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Calculate New Version
+        id: calculate-version
+        run: |
+          # Extract the major, minor, and patch parts of the latest version
+          IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG#v}"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+
+          # Increment the major version (update this logic if needed for major/minor increments)
+          MAJOR=$((MAJOR + 1))
+
+          # Construct the new version tag
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Create and Push New Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          NEW_VERSION=$NEW_VERSION
+          git tag $NEW_VERSION
+          git push origin $NEW_VERSION
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          release_name: "Release for commit ${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
+          body: "This release includes the following commit: ${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
+          draft: false
+          prerelease: false
