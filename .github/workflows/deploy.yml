@@ -1,38 +1,17 @@
-name: release_test
+name: List Files
 
-on:
-  push
-
-permissions:
-  contents: write
+on: 
+  push:
+    branches:
+      - master
 
 jobs:
-  check_version:
+  list-files:
     runs-on: ubuntu-latest
-    if: ${{ endsWith(github.ref, '/dev') || endsWith(github.ref, '/master') || startsWith(github.ref, 'refs/tags')}}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Print Version
-        run: |
-          python -c "import version; print(version.__version__)"
 
-  release:
-    name: Release pushed tag
-    needs: check_version
-    runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags') }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Print Version
-        run: |
-          python -c "import version; print(version.__version__)"
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name }}
-        run: |
-          gh release create "$tag" \
-            --repo="$GITHUB_REPOSITORY" \
-            --title="${tag#v}" \
-            --generate-notes
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: List files
+      run: ls -R
