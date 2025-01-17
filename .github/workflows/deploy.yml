@@ -1,7 +1,9 @@
 name: List Files
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - '**.py'
 
 jobs:
   list-files:
