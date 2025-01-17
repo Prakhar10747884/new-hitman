@@ -3,7 +3,7 @@ name: List Files
 on:
   push:
     paths:
-      - '**.py'
+      - 'src/**'
 
 jobs:
   list-files:
