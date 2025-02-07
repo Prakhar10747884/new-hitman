@@ -2,8 +2,8 @@ name: List Files
 
 on:
   push:
-    paths:
-      - 'src/**'
+    branches:
+      - master
 
 jobs:
   list-files:
